@@ -41,7 +41,7 @@ Place these SQLite source databases in `data/source/` before building:
 - `digital-khatt-15-lines.db` — KFGQPC V2 15-line Mushaf layout
 - `qpc-hafs-tajweed.db` — QPC Tajweed color metadata (optional)
 
-> **TODO:** Add direct download links for the source databases in the README (GitHub Releases or external host). The `.db` files are gitignored.
+> **TODO:** Upload source databases as GitHub Release assets (up to 2GB each, free bandwidth on public repos) and add download links to the README. The `.db` files are gitignored.
 
 Output: `data/output/quran_offline.db`
 

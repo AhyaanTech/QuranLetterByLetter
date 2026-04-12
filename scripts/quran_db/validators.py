@@ -24,6 +24,7 @@ from .config import (
     TABLE_WORDS_TAJWEED,  # Official Tajweed colors
     TOTAL_SURAHS,
     DIACRITIC_FLAGS,
+    CODEPOINT_TO_FLAG,
     SKIPPED_CATEGORIES,
 )
 
@@ -124,6 +125,28 @@ class DatabaseValidator:
                 message="All letter indexes contiguous"
                 if contiguity_result
                 else "Gaps found in letter indexes",
+            )
+        )
+
+        flags_result = self.validate_diacritic_flags()
+        self.results.append(
+            ValidationResult(
+                name="Diacritic Flag Columns",
+                passed=flags_result,
+                message="All has_* columns match diacritics_json"
+                if flags_result
+                else "Flag column mismatches found",
+            )
+        )
+
+        word_pos_result = self.validate_word_position_ordering()
+        self.results.append(
+            ValidationResult(
+                name="Word Position Ordering",
+                passed=word_pos_result,
+                message="All verses have contiguous word positions"
+                if word_pos_result
+                else "Non-contiguous word positions found",
             )
         )
 
@@ -877,6 +900,125 @@ class DatabaseValidator:
                 print(
                     f"    - word_id={word_id}: {cnt} letters but max_index={max_idx} (expected {cnt - 1})"
                 )
+            return False
+
+    def validate_diacritic_flags(self) -> bool:
+        """Verify the 32 has_* boolean columns match what's in diacritics_json for every letter.
+
+        The subfield consistency test verifies base_letter + diacritics == letter_with_diacritics,
+        but it never checks whether the 32 boolean flag columns (has_fatha, has_shadda, etc.)
+        actually reflect the diacritics present. A bug in CODEPOINT_TO_FLAG would silently
+        produce wrong flags while that test passes.
+        """
+        print("\n" + "=" * 60)
+        print("Validating Diacritic Flag Columns")
+        print("=" * 60)
+        print("Verifies: has_* columns match diacritics_json codepoints")
+
+        table_exists = self.cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+            (TABLE_LETTER_BREAKDOWN,),
+        ).fetchone()
+        if not table_exists:
+            print("\n[SKIP] letter_breakdown table not found")
+            return True
+
+        # Fetch all flag columns along with diacritics_json in one pass
+        flag_cols = ", ".join(DIACRITIC_FLAGS)
+        self.cursor.execute(f"""
+            SELECT id, word_id, diacritics_json, {flag_cols}
+            FROM {TABLE_LETTER_BREAKDOWN}
+            ORDER BY id;
+        """)
+
+        mismatches = []
+        total = 0
+        for row in self.cursor.fetchall():
+            total += 1
+            row_id = row[0]
+            word_id = row[1]
+            diacritics_json_str = row[2]
+            flag_values = row[3:]  # one value per flag in DIACRITIC_FLAGS order
+
+            # Determine which flags should be set from diacritics_json
+            expected_flags = set()
+            if diacritics_json_str:
+                try:
+                    diacritics = json.loads(diacritics_json_str)
+                    for d in diacritics:
+                        cp = d.get("codepoint")
+                        if cp and cp in CODEPOINT_TO_FLAG:
+                            expected_flags.add(CODEPOINT_TO_FLAG[cp])
+                except (json.JSONDecodeError, KeyError):
+                    mismatches.append((row_id, word_id, "invalid diacritics_json", ""))
+                    if len(mismatches) >= 20:
+                        break
+                    continue
+
+            # Compare expected vs actual flag columns
+            for flag_name, actual_value in zip(DIACRITIC_FLAGS, flag_values):
+                expected_value = 1 if flag_name in expected_flags else 0
+                if bool(actual_value) != bool(expected_value):
+                    mismatches.append(
+                        (row_id, word_id, flag_name, f"expected={expected_value}, got={actual_value}")
+                    )
+                    break  # one mismatch per row is enough to flag it
+
+            if len(mismatches) >= 20:
+                break
+
+        if not mismatches:
+            print(f"  [PASS] All {total:,} letters have correct diacritic flag columns")
+            return True
+        else:
+            print(f"  [FAIL] Found {len(mismatches)} flag mismatches (stopped at 20)")
+            for row_id, word_id, flag, detail in mismatches[:5]:
+                print(f"    - letter id={row_id}, word_id={word_id}: {flag}: {detail}")
+            return False
+
+    def validate_word_position_ordering(self) -> bool:
+        """Verify word_position values within each verse are contiguous and unique.
+
+        For each verse, word_position should form a gapless sequence with no duplicates.
+        The letter index contiguity test checks letters within a word; this checks
+        words within a verse.
+        """
+        print("\n" + "=" * 60)
+        print("Validating Word Position Ordering")
+        print("=" * 60)
+        print("Verifies: word_position is contiguous and unique within each verse")
+
+        # Check for gaps or duplicates: if positions span min..max with no gaps,
+        # then (max - min + 1) == count. Combined with a duplicate check via count
+        # vs distinct count.
+        gaps = self.cursor.execute(f"""
+            SELECT
+                verse_key,
+                COUNT(*) as cnt,
+                COUNT(DISTINCT word_position) as distinct_cnt,
+                MAX(word_position) as max_pos,
+                MIN(word_position) as min_pos
+            FROM {TABLE_WORDS}
+            GROUP BY verse_key
+            HAVING (max_pos - min_pos + 1) != cnt
+               OR distinct_cnt != cnt
+            LIMIT 20;
+        """).fetchall()
+
+        if not gaps:
+            verse_count = self.cursor.execute(
+                f"SELECT COUNT(DISTINCT verse_key) FROM {TABLE_WORDS}"
+            ).fetchone()[0]
+            print(f"  [PASS] All {verse_count:,} verses have contiguous word positions")
+            return True
+        else:
+            print(f"  [FAIL] Found {len(gaps)} verses with non-contiguous or duplicate word positions")
+            for verse_key, cnt, distinct_cnt, max_pos, min_pos in gaps[:5]:
+                if distinct_cnt != cnt:
+                    issue = f"duplicate positions ({cnt} words, {distinct_cnt} distinct)"
+                else:
+                    issue = f"gap in range {min_pos}..{max_pos} ({cnt} words)"
+                print(f"    - {verse_key}: {issue}")
             return False
 
     def validate_schema(self) -> bool:

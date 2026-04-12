@@ -237,6 +237,8 @@ def run_all_tests() -> bool:
         ayah_words_passed = validator.validate_ayah_word_concatenation()
         subfield_passed = validator.validate_subfield_consistency()
         contiguity_passed = validator.validate_letter_index_contiguity()
+        flags_passed = validator.validate_diacritic_flags()
+        word_pos_passed = validator.validate_word_position_ordering()
 
         # Summary
         print("\n" + "=" * 60)
@@ -255,6 +257,12 @@ def run_all_tests() -> bool:
         print(
             f"  Letter Index Contiguity:  {'[PASS]' if contiguity_passed else '[FAIL]'}"
         )
+        print(
+            f"  Diacritic Flag Columns:   {'[PASS]' if flags_passed else '[FAIL]'}"
+        )
+        print(
+            f"  Word Position Ordering:   {'[PASS]' if word_pos_passed else '[FAIL]'}"
+        )
         print("=" * 60)
 
         return (
@@ -263,6 +271,8 @@ def run_all_tests() -> bool:
             and ayah_words_passed
             and subfield_passed
             and contiguity_passed
+            and flags_passed
+            and word_pos_passed
         )
 
 

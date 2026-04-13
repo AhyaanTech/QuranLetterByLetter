@@ -1,0 +1,17 @@
+[project]
+name = "quran-letter-by-letter"
+version = "0.1.0"
+description = "Open-source letter-by-letter Quran data pipeline"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "psycopg[binary]>=3.3.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

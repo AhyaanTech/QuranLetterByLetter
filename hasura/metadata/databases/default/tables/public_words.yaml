@@ -1,0 +1,18 @@
+table:
+  name: words
+  schema: public
+array_relationships:
+  - name: letter_breakdowns
+    using:
+      foreign_key_constraint_on:
+        column: word_id
+        table:
+          name: letter_breakdown
+          schema: public
+  - name: mushaf_pages
+    using:
+      foreign_key_constraint_on:
+        column: word_id
+        table:
+          name: mushaf_pages
+          schema: public

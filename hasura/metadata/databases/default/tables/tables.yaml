@@ -1,0 +1,6 @@
+- "!include public_ayahs.yaml"
+- "!include public_letter_breakdown.yaml"
+- "!include public_metadata.yaml"
+- "!include public_mushaf_pages.yaml"
+- "!include public_surahs.yaml"
+- "!include public_words.yaml"

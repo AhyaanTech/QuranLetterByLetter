@@ -12,9 +12,25 @@ Open-source letter-by-letter Quran data pipeline. Produces a SQLite database wit
 brew install uv hasura-cli
 ```
 
+## Docker image
+
+A pre-built image is published to GHCR on every push to `main`. It bakes in the source databases and runs the full pipeline against a PostgreSQL instance you supply:
+
+```bash
+docker run --rm \
+  -e POSTGRES_DSN=postgresql://user:pass@host/db \
+  ghcr.io/ahyaantech/quranletterbyletter:latest
+```
+
+Then apply Hasura metadata to wire up the GraphQL schema:
+
+```bash
+hasura metadata apply --project hasura --endpoint http://<hasura-host>:8080 --admin-secret <secret>
+```
+
 ## Data Sources
 
-Place these SQLite databases in `data/source/` before building:
+Source databases are available as assets on the [v1.0-data GitHub Release](https://github.com/AhyaanTech/QuranLetterByLetter/releases/tag/v1.0-data). Download and place them in `data/source/` before building locally:
 
 | File | Source |
 |---|---|
@@ -22,7 +38,7 @@ Place these SQLite databases in `data/source/` before building:
 | `digital-khatt-15-lines.db` | KFGQPC V2 15-line Mushaf layout |
 | `qpc-hafs-tajweed.db` | QPC Tajweed colors *(optional)* |
 
-## Setup
+## Local setup
 
 ### 1. Build the SQLite database
 

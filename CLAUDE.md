@@ -34,6 +34,22 @@ docker compose up -d
 # Hasura console: http://localhost:8080/console
 ```
 
+### Pre-built pipeline image (GHCR)
+
+Published automatically on push to `main` via `.github/workflows/docker.yml`.
+
+```bash
+# Run the full pipeline against an existing PostgreSQL instance
+docker run --rm \
+  -e POSTGRES_DSN=postgresql://user:pass@host/db \
+  ghcr.io/ahyaantech/quranletterbyletter:latest
+
+# Rebuild and push manually
+gh workflow run docker.yml
+```
+
+The image downloads source databases from the `v1.0-data` GitHub Release at build time (baked in). Entrypoint: `scripts/entrypoint.py` → runs `build_db.py --full`, `build_letters.py`, `load_to_postgres.py --drop` in sequence.
+
 ## Data Sources
 
 Place these SQLite source databases in `data/source/` before building:
@@ -41,7 +57,7 @@ Place these SQLite source databases in `data/source/` before building:
 - `digital-khatt-15-lines.db` — KFGQPC V2 15-line Mushaf layout
 - `qpc-hafs-tajweed.db` — QPC Tajweed color metadata (optional)
 
-> **TODO:** Upload source databases as GitHub Release assets (up to 2GB each, free bandwidth on public repos) and add download links to the README. The `.db` files are gitignored.
+> Source databases are available as assets on the [v1.0-data GitHub Release](https://github.com/AhyaanTech/QuranLetterByLetter/releases/tag/v1.0-data). The `.db` files are gitignored.
 
 Output: `data/output/quran_offline.db`
 

@@ -2,7 +2,7 @@
 """Docker entrypoint: runs the full pipeline and loads data into PostgreSQL.
 
 Steps:
-    1. build_db.py --full   (words, ayahs, surahs, mushaf_pages, metadata)
+    1. build_db.py --build  (words, ayahs, surahs, mushaf_pages, metadata)
     2. build_letters.py     (letter_breakdown)
     3. load_to_postgres.py  (bulk COPY into PostgreSQL)
 
@@ -27,8 +27,8 @@ def step(script: str, *args: str) -> None:
 
 
 def main() -> None:
-    print("=== Step 1: build_db.py --full ===", flush=True)
-    step("build_db.py", "--full")
+    print("=== Step 1: build_db.py --build ===", flush=True)
+    step("build_db.py", "--build")
 
     print("=== Step 2: build_letters.py ===", flush=True)
     step("build_letters.py")

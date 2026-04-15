@@ -32,5 +32,14 @@ services:
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_ADMIN_SECRET:-hasura_dev_secret}
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
 
+  loader:
+    build: .
+    environment:
+      POSTGRES_DSN: postgresql://quran:${POSTGRES_PASSWORD:-quran}@postgres:5432/quran
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   postgres_data:

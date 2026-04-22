@@ -1,6 +1,6 @@
 version: 3
 endpoint: http://localhost:8080
-admin_secret: '{{HASURA_ADMIN_SECRET}}'
+admin_secret: "hasura_dev_secret"
 metadata_directory: metadata
 actions:
   kind: synchronous

@@ -71,6 +71,20 @@ hasura metadata apply --project hasura --endpoint http://localhost:8080 --admin-
 
 GraphQL API is now available at `http://localhost:8080/v1/graphql`.
 
+## Publishing a Merged DB Release
+
+Run the release workflow manually via GitHub Actions:
+
+1. Go to **Actions → Release SQLite Database → Run workflow**
+2. Enter the version (e.g., `1.0`) — the workflow constructs the tag `v1.0-merged`
+3. Optionally check **Mark as prerelease** if this is a draft/staging release
+4. Run — the workflow builds the DB, computes SHA256, generates `manifest.json`, and publishes both to a GitHub Release
+
+Irtiqa fetches the manifest from:
+```
+https://github.com/AhyaanTech/QuranLetterByLetter/releases/latest/download/manifest.json
+```
+
 ## Development
 
 ### Validate the SQLite build

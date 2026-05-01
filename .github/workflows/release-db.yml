@@ -1,0 +1,69 @@
+name: Release SQLite Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (e.g. 1.0)"
+        required: true
+      prerelease:
+        description: "Mark as prerelease"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Download source databases
+        run: |
+          mkdir -p data/source
+          ASSET_URL="https://github.com/${{ github.repository }}/releases/download/v1.0-data"
+
+          curl -fsSL "$ASSET_URL/qpc-hafs-word-by-word.db" -o data/source/qpc-hafs-word-by-word.db
+          curl -fsSL "$ASSET_URL/digital-khatt-15-lines.db" -o data/source/digital-khatt-15-lines.db
+          curl -fsSL "$ASSET_URL/qpc-hafs-tajweed.db" -o data/source/qpc-hafs-tajweed.db || true
+
+      - name: Build core tables
+        run: uv run scripts/build_db.py --full
+
+      - name: Build letter breakdown
+        run: uv run scripts/build_letters.py
+
+      - name: Compute checksums
+        id: checksum
+        run: |
+          echo "sha256=$(sha256sum data/output/quran_offline.db | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          echo "size_bytes=$(wc -c < data/output/quran_offline.db)" >> $GITHUB_OUTPUT
+          echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+
+      - name: Generate manifest
+        id: manifest
+        run: python .github/scripts/generate_manifest.py
+        env:
+          VERSION: ${{ inputs.version }}
+          SHA256: ${{ steps.checksum.outputs.sha256 }}
+          SIZE_BYTES: ${{ steps.checksum.outputs.size_bytes }}
+          BUILT_AT: ${{ steps.checksum.outputs.built_at }}
+          GITHUB_SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2.0.0
+        with:
+          tag_name: ${{ steps.manifest.outputs.tag }}
+          name: ${{ steps.manifest.outputs.tag }}
+          draft: false
+          prerelease: ${{ inputs.prerelease }}
+          files: |
+            data/output/quran_offline.db
+            manifest.json

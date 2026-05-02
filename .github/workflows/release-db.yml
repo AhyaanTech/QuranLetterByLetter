@@ -34,9 +34,9 @@ jobs:
           curl -fsSL "$ASSET_URL/qpc-hafs-tajweed.db" -o data/source/qpc-hafs-tajweed.db || true
 
       - name: Build core tables
-        run: uv run scripts/build_db.py --full
+        run: uv run scripts/build_db.py --build
 
-      - name: Build letter breakdown
+      - name: Build letter breakdown + integrity test
         run: uv run scripts/build_letters.py
 
       - name: Compute checksums

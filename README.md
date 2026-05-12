@@ -1,6 +1,6 @@
 # QuranLetterByLetter
 
-Open-source letter-by-letter Quran data pipeline. Produces a SQLite database with full letter breakdown (base letter + 34 diacritic flags) for all 83,668 Quran words (~341,062 letters), served via PostgreSQL and Hasura GraphQL.
+Open-source letter-by-letter Quran data pipeline. Produces a SQLite database with full letter breakdown (base letter + 34 diacritic flags) for all 83,668 Quran words (338,281 letters), served via PostgreSQL and Hasura GraphQL.
 
 ## Prerequisites
 
@@ -122,6 +122,6 @@ hasura metadata apply --project hasura --endpoint http://localhost:8080 --admin-
 | `words` | 83,668 | Core word text with surah/ayah/position |
 | `ayahs` | 6,236 | Verse metadata (juz, hizb, sajda, page) |
 | `surahs` | 114 | Chapter metadata |
-| `mushaf_pages` | ~1.2M | Word layout on Mushaf pages (15 lines × 610 pages) |
-| `letter_breakdown` | ~341,062 | Letter segmentation with 34 diacritic flags |
+| `mushaf_pages` | 83,668 | Word layout on Mushaf pages (one row per word) |
+| `letter_breakdown` | 338,281 | Letter segmentation with 34 diacritic flags |
 | `metadata` | — | Build timestamps and schema version |

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Purpose
 
-Open-source letter-by-letter Quran data pipeline. Produces a SQLite database with full letter breakdown (base letter + 34 diacritic flags) for all 83,668 Quran words (~341,062 letters), plus a PostgreSQL/Hasura layer for GraphQL access.
+Open-source letter-by-letter Quran data pipeline. Produces a SQLite database with full letter breakdown (base letter + 34 diacritic flags) for all 83,668 Quran words (338,281 letters), plus a PostgreSQL/Hasura layer for GraphQL access.
 
 ## Build Commands
 
@@ -79,8 +79,8 @@ Output: `data/output/quran_offline.db`
 - **words** (83,668): `id, surah, ayah, word_position, text, verse_key`
 - **ayahs** (6,236): `verse_key, surah, ayah, first/last_word_id, word_count` (juz/hizb populated from external source)
 - **surahs** (114): chapter metadata placeholders (names populated from external source)
-- **mushaf_pages** (~1.2M): `page_number, line_number, word_id, line_type, is_centered`
-- **letter_breakdown** (~341,062): `word_id, letter_index, base_letter, letter_with_diacritics, letter_type, is_hamza_variant, 34× has_* boolean diacritic flags, diacritics_json`
+- **mushaf_pages** (83,668): `page_number, line_number, word_id, line_type, is_centered` (one row per word)
+- **letter_breakdown** (338,281): `word_id, letter_index, base_letter, letter_with_diacritics, letter_type, is_hamza_variant, 34× has_* boolean diacritic flags, diacritics_json`
 - **metadata**: build timestamps, schema versions
 
 ### Letter Segmentation Logic
